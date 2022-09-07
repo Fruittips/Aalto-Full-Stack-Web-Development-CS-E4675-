@@ -58,10 +58,6 @@ const App = () => {
     setAnecdotes(copyAnecdotes);
   };
 
-  // let topVoteCount = 0;
-  // let topAnecdote = anecdotes.forEach(anecdote => {if (anecdote.votes > topVoteCount) {
-  //   topVoteCount
-  // } })
   let topVoteCount = Math.max(...anecdotes.map((anecdote) => anecdote.votes));
   let topAnecdote = anecdotes.filter(
     (anecdote) => anecdote.votes === topVoteCount
