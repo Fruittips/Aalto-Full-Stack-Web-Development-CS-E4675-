@@ -28,6 +28,8 @@ yarn-error.log*
 # Dependency directories
 node_modules/
 jspm_packages/
+/.pnp
+.pnp.js
 
 # dotenv environment variables file
 .env
