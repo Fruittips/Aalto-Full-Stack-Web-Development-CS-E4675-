@@ -227,7 +227,13 @@ const App = () => {
           }, 5000);
         })
         .catch((error) => {
-          console.log(error);
+          setIsError({ isError: true, message: error.response.data.error });
+          setTimeout(() => {
+            setIsError({
+              isError: false,
+              message: "",
+            });
+          }, 5000);
         });
     }
   };
