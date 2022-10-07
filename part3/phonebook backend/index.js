@@ -1,123 +1,129 @@
-const express = require("express");
-const morgan = require("morgan");
-const cors = require("cors");
-const app = express();
+require('dotenv').config()
+const express = require('express')
+const morgan = require('morgan')
+const cors = require('cors')
+const app = express()
+const Person = require('./models/person')
 
-const PORT = process.env.PORT || 3001;
-morgan.token("body", (req) => {
-  return JSON.stringify(req.body);
-});
+// eslint-disable-next-line no-undef
+const PORT = process.env.PORT || 3001
+const errorHandler = (error, req, res, next) => {
+  if (error.name === 'CaseError') {
+    return res.status(400).send({ error: 'malformatted id' })
+  } else if (error.name === 'ValidationError') {
+    console.log(error)
+    return res.status(400).json({ error: error.message })
+  }
+  next(error)
+}
+morgan.token('body', (req) => {
+  return JSON.stringify(req.body)
+})
 
-let phonebook = [
-  {
-    id: 1,
-    name: "Arto Hellas",
-    number: "040-123456",
-  },
-  {
-    id: 2,
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-  },
-  {
-    id: 3,
-    name: "Dan Abramov",
-    number: "12-43-234345",
-  },
-  {
-    id: 4,
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-  },
-];
-
-app.use(express.static("build"));
-app.use(express.json());
-app.use(cors());
-
+//middlewares
+app.use(express.static('build'))
+app.use(express.json())
+app.use(cors())
 app.use(
   morgan(
-    ":method :url :status :res[content-length] - :response-time ms :body",
+    ':method :url :status :res[content-length] - :response-time ms :body',
     {
-      skip: (req, res) => {
-        return req.method != "POST";
+      skip: (req) => {
+        return req.method !== 'POST'
       },
     }
   )
-);
-
+)
 app.use(
-  morgan("tiny", {
-    skip: (req, res) => req.method == "POST",
+  morgan('tiny', {
+    skip: (req) => req.method === 'POST',
   })
-);
+)
+// end of middleware section
 
-app.get("/", (req, res) => {
-  res.send("<h1>Phonebook up and running</h1>");
-});
+app.get('/', (req, res) => {
+  res.send('<h1>Phonebook up and running</h1>')
+})
 
-app.get("/api/persons", (req, res) => {
-  res.json(phonebook);
-});
+app.get('/info', (req, res) => {
+  const date = new Date()
+  Person.count({}, (error, count) => {
+    res.send(`<p>Phonebook has info for ${count} people</p><br><p>${date}</p>`)
+  })
+})
 
-app.get("/api/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const phoneEntry = phonebook.find((entry) => entry.id === id);
+app.get('/api/persons', (req, res, next) => {
+  Person.find({})
+    .then((entries) => {
+      res.json(entries)
+    })
+    .catch((error) => next(error))
+})
 
-  if (phoneEntry) {
-    res.json(phoneEntry);
-  } else {
-    res.statusMessage = "phonebook entry not found";
-    res.status(404).end();
+app.get('/api/persons/:id', (req, res, next) => {
+  console.log(req.params.id)
+  Person.findById(req.params.id)
+    .then((entry) => {
+      if (entry) {
+        res.json(entry)
+      } else {
+        res.status(404).end()
+      }
+    })
+    .catch((error) => next(error))
+})
+
+app.put('/api/persons/:id', (req, res, next) => {
+  const body = req.body
+
+  if ('number' in body) {
+    Person.findByIdAndUpdate(
+      req.params.id,
+      { number: body.number },
+      {
+        new: true,
+        runValidators: true,
+        upsert: true,
+      }
+    )
+      .then((updatedEntry) => {
+        res.json(updatedEntry)
+      })
+      .catch((error) => next(error))
   }
-});
+})
 
-app.get("/info", (req, res) => {
-  const entries = phonebook.length;
-  const date = new Date();
-
-  res.send(`<p>Phonebook has info for ${entries} people</p><br><p>${date}</p>`);
-});
-
-app.delete("/api/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
-  phonebook = phonebook.filter((entry) => entry.id !== id);
-
-  res.statusMessage = "entry succesfully deleted";
-  res.status(204).end();
-});
-
-app.post("/api/persons", (req, res) => {
-  generateId = () => {
-    return Math.floor(Math.random() * (1000 - 1) + 1);
-  };
-  checkNameExists = (body) => {
-    const existingEntries = phonebook.find((entry) => entry.name === body.name);
-    if (existingEntries !== undefined) {
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  const body = req.body;
+app.post('/api/persons', (req, res, next) => {
+  const body = req.body
 
   if (!body.name || !body.number) {
-    return res.status(400).json({ error: "content missing" });
-  } else if (checkNameExists(body)) {
-    return res.status(501).json({ error: "name must be unique" });
+    return res.status(400).json({ error: 'content missing' })
   } else {
-    const entry = {
-      id: generateId(),
+    const person = new Person({
       name: body.name,
       number: body.number,
-    };
+    })
 
-    phonebook = phonebook.concat(entry);
-    res.json(phonebook);
+    person
+      .save()
+      .then((savedPerson) => {
+        res.json(savedPerson)
+      })
+      .catch((error) => next(error))
   }
-});
+})
 
+app.delete('/api/persons/:id', (req, res, next) => {
+  Person.findByIdAndRemove(req.params.id)
+    .then(() => {
+      res.statusMessage = 'entry succesfully deleted'
+      res.status(204).end()
+    })
+    .catch((error) => next(error))
+})
+
+//error handling middleware + binding to port
+app.use(errorHandler)
 app.listen(PORT, () => {
-  console.log(`server up and running on port ${PORT}`);
-});
+  console.log(`server up and running on port ${PORT}`)
+})

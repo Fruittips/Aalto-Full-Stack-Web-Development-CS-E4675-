@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import {
-  addDetailsRequest,
-  getDetailsRequest,
-  putDetailsRequest,
-  deleteDetailsRequest,
-} from "./AxiosRequests";
+  addPersonDetails,
+  getPersonDetails,
+  putPersonDetails,
+  deletePersonDetails,
+} from "./services/PersonService";
 
 const Filter = ({ searchPersons }) => {
   return (
@@ -55,12 +55,13 @@ const Persons = ({
   );
 
   const onDelete = (event) => {
+    console.log(event.target.value);
     const selectedPerson = persons.filter(
       (person) => person.id == event.target.value
     );
 
     if (window.confirm(`Delete ${selectedPerson[0].name}?`)) {
-      deleteDetailsRequest(event.target.value)
+      deletePersonDetails(event.target.value)
         .then(() => {
           let updatedPersons = persons.filter(
             (person) => person.id != event.target.value
@@ -151,6 +152,23 @@ const DeletedMessage = ({ name }) => {
     </div>
   );
 };
+const ErrorMessage = ({ message }) => {
+  const deletedMessageStyle = {
+    color: "red",
+    fontSize: 24,
+    borderStyle: "solid",
+    borderColor: "red",
+    borderRadius: "5",
+    width: "100%",
+    margin: "5",
+    backgroundColor: "grey",
+  };
+  return (
+    <div style={deletedMessageStyle}>
+      <p>{message}</p>
+    </div>
+  );
+};
 
 const App = () => {
   const [persons, setPersons] = useState([]);
@@ -159,10 +177,14 @@ const App = () => {
   const [newSearch, setNewSearch] = useState("");
   const [isAdded, setIsAdded] = useState({ added: false, name: "" });
   const [isDeleted, setIsDeleted] = useState({ deleted: false, name: "" });
+  const [isError, setIsError] = useState({ isError: false, message: "" });
 
   const addDetails = (event) => {
     event.preventDefault();
-    const existingUser = persons.filter((person) => person.name === newName);
+
+    const existingUser = JSON.parse(JSON.stringify(persons)).filter(
+      (person) => person.name === newName
+    );
     let isExists = existingUser.length !== 0;
     if (isExists) {
       if (
@@ -170,8 +192,7 @@ const App = () => {
           `${newName} is already added to phonebook, replace the old number with a new one?`
         )
       ) {
-        existingUser[0]["number"] = newNumber;
-        putDetailsRequest(existingUser[0].id, existingUser[0])
+        putPersonDetails(existingUser[0].id, newNumber)
           .then((response) => {
             persons.map((person) => {
               if (person.id === response.data.id) {
@@ -183,29 +204,32 @@ const App = () => {
             setNewNumber("");
           })
           .catch((error) => {
-            console.log(error);
+            setIsError({ isError: true, message: error.response.data.error });
+            setTimeout(() => {
+              setIsError({
+                isError: false,
+                message: "",
+              });
+            }, 5000);
           });
       }
-      return;
+    } else {
+      const newPerson = { name: newName, number: newNumber };
+      addPersonDetails(newPerson)
+        .then((response) => {
+          newPerson["id"] = response.data.id;
+          setPersons([...persons, newPerson]);
+          setNewName("");
+          setNewNumber("");
+          setIsAdded({ added: true, name: newPerson.name });
+          setTimeout(() => {
+            setIsAdded({ added: false, name: newPerson.name });
+          }, 5000);
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     }
-
-    const newPerson = { name: newName, number: newNumber };
-    addDetailsRequest(newPerson)
-      .then((response) => {
-        newPerson["id"] = response.data.id;
-        setPersons([...persons, newPerson]);
-        setNewName("");
-        setNewNumber("");
-        setIsAdded({ added: true, name: newPerson.name });
-      })
-      .then(
-        setTimeout(() => {
-          setIsAdded({ added: false, name: newPerson.name });
-        }, 5000)
-      )
-      .catch((error) => {
-        console.log(error);
-      });
   };
 
   const searchPersons = (event) => {
@@ -213,7 +237,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    getDetailsRequest(setPersons);
+    getPersonDetails(setPersons);
   }, []);
 
   return (
@@ -221,6 +245,7 @@ const App = () => {
       <h2>Phonebook</h2>
       {isAdded.added ? <AddedMessage name={isAdded.name} /> : null}
       {isDeleted.deleted ? <DeletedMessage name={isDeleted.name} /> : null}
+      {isError.isError ? <ErrorMessage message={isError.message} /> : null}
       <Filter searchPersons={searchPersons} />
       <h2>add a new</h2>
       <PersonForm
