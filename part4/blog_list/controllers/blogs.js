@@ -27,18 +27,12 @@ blogsRouter.post("/", middleware.userExtractor, async (request, response) => {
   return response.status(201).json(blog).end()
 })
 
-blogsRouter.delete(
-  "/:id",
-  middleware.userExtractor,
-  async (request, response) => {
-    const userId = request.user
+blogsRouter.delete("/:id", async (request, response) => {
+  await Blog.deleteOne({ _id: request.params.id })
+  return response.sendStatus(204)
+})
 
-    await Blog.deleteOne({ _id: userId })
-    return response.sendStatus(204)
-  }
-)
-
-blogsRouter.put("/:id", async (request, response) => {
+blogsRouter.put("/:id", middleware.userExtractor, async (request, response) => {
   const changes = request.body
   const updatedPost = await Blog.findByIdAndUpdate(request.params.id, changes, {
     returnDocument: "after",
