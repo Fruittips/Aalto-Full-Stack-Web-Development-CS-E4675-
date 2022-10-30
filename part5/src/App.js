@@ -57,7 +57,6 @@ const App = () => {
   }
 
   const handleLogout = async () => {
-    console.log("logging out")
     window.localStorage.removeItem("user")
     setUser(null)
   }
@@ -124,12 +123,16 @@ const App = () => {
       <br />
       <div>
         <h2>create new</h2>
-        <Togglable buttonLabel="create new blog" ref={blogFormRef}>
+        <Togglable
+          buttonLabel="create new blog"
+          hideButtonLabel="cancel"
+          ref={blogFormRef}
+        >
           <BlogForm onCreateHandler={handleCreateBlog} />
         </Togglable>
       </div>
       {blogs.map((blog) => (
-        <Blog key={blog.id} blog={blog} ref={blogPostRef} />
+        <Blog key={blog.id} blog={blog} blogPostRef={blogPostRef} />
       ))}
     </div>
   )
