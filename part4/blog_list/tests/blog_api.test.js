@@ -23,6 +23,14 @@ let initialBlogs = [
   },
 ];
 
+const logInUser = async () => {
+  let response = await api
+    .post("/api/login")
+    .send({ username: "root", password: "sekret" });
+  const token = response.body.token;
+  return token;
+};
+
 beforeEach(async () => {
   await Blog.deleteMany({});
   let blog = new Blog(initialBlogs[0]);
@@ -43,9 +51,12 @@ test("default like value 0 if like is missing", async () => {
     url: "https://TESTTT.lol/",
   };
 
+  const token = await logInUser();
+
   let response = await api
     .post("/api/blogs")
     .send(postBlogData)
+    .set("Authorization", `bearer ${token}`)
     .expect(201)
     .expect("Content-Type", /application\/json/);
 
@@ -63,11 +74,23 @@ test("missing url or title response error 400 Bad Request", async () => {
     url: "bababab.com",
   };
 
-  await api.post("/api/blogs").send(missingUrlData).expect(400);
-  await api.post("/api/blogs").send(missingTitleData).expect(400);
+  const token = await logInUser();
+
+  await api
+    .post("/api/blogs")
+    .send(missingUrlData)
+    .set("Authorization", `bearer ${token}`);
+  expect(400);
+  await api
+    .post("/api/blogs")
+    .send(missingTitleData)
+    .set("Authorization", `bearer ${token}`);
+  expect(400);
 });
 
 test("deleting blog post", async () => {
+  const token = await logInUser();
+
   let response = await api
     .get("/api/blogs")
     .expect(200)
@@ -75,7 +98,10 @@ test("deleting blog post", async () => {
 
   const latestPost = response.body[response.body.length - 1];
 
-  await api.delete(`/api/blogs/${latestPost.id}`).expect(204);
+  await api
+    .delete(`/api/blogs/${latestPost.id}`)
+    .set("Authorization", `bearer ${token}`)
+    .expect(204);
 });
 
 test("updating blog post", async () => {
@@ -94,6 +120,17 @@ test("updating blog post", async () => {
     .expect(200);
 
   expect(response.body["likes"]).toBe(21);
+});
+
+test("unauthorised posting of blog if token is missing", async () => {
+  const postBlogData = {
+    title: "Missing likes number",
+    author: "Author Chan",
+    url: "https://TESTTT.lol/",
+  };
+
+  let response = await api.post("/api/blogs").send(postBlogData).expect(401);
+  expect(response.error.text).toBe("Unauthorized");
 });
 
 //Users
