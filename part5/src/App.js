@@ -5,6 +5,7 @@ import blogService from "./services/blogsService"
 import loginService from "./services/loginService"
 import { AddedMessage, ErrorMessage } from "./components/Messages"
 import Togglable from "./components/Togglable"
+import { sortByLikes } from "./utils/sortBlog"
 
 const App = () => {
   const [blogs, setBlogs] = useState([])
@@ -20,6 +21,7 @@ const App = () => {
   useEffect(() => {
     const fetchBlogs = async () => {
       const blogs = await blogService.getAllBlogs()
+      sortByLikes(blogs)
       setBlogs(blogs)
     }
 
@@ -73,11 +75,30 @@ const App = () => {
       setBlogs(blogs.concat(newBlog))
       setStatusMessage(newBlog.title)
       blogFormRef.current.toggleVisibility()
+      setTimeout(() => {
+        setStatusMessage(null)
+      }, 5000)
     } catch (exception) {
       setErrorMessage("type in title and url!!")
       setTimeout(() => {
         setErrorMessage(null)
       }, 5000)
+    }
+  }
+
+  const handleDeleteBlog = async (blog) => {
+    if (window.confirm(`Remove blog ${blog.title} by ${blog.author}?`)) {
+      try {
+        await blogService.deleteBlog(blog.id)
+        const copyBlogs = [...blogs]
+        copyBlogs.splice(
+          blogs.findIndex((x) => x.id === blog.id),
+          1
+        )
+        setBlogs(copyBlogs)
+      } catch (exception) {
+        console.error("Cannot delete", exception)
+      }
     }
   }
 
@@ -132,7 +153,12 @@ const App = () => {
         </Togglable>
       </div>
       {blogs.map((blog) => (
-        <Blog key={blog.id} blog={blog} blogPostRef={blogPostRef} />
+        <Blog
+          key={blog.id}
+          blog={blog}
+          blogPostRef={blogPostRef}
+          deleteBlogHandler={handleDeleteBlog}
+        />
       ))}
     </div>
   )
