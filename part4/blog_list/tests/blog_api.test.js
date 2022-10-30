@@ -184,6 +184,13 @@ describe("when there is initially one user in db", () => {
       "username and password must be at least 3 characters long"
     );
   });
+
+  test("error if no username or password", async () => {
+    let newUser = {};
+    let response = await api.post("/api/users").send(newUser).expect(400);
+
+    expect(response.body.error).toBe("Username and Password must be entered");
+  });
 });
 
 afterAll(() => {

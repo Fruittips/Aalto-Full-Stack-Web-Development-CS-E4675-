@@ -13,6 +13,12 @@ usersRouter.post("/", async (request, response) => {
 
   const existingUser = await User.findOne({ username });
 
+  if (!username || !password) {
+    return response.status(400).json({
+      error: "Username and Password must be entered",
+    });
+  }
+
   if (username.length < 3 || password.length < 3) {
     return response.status(400).json({
       error: "username and password must be at least 3 characters long",

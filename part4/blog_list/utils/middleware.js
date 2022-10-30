@@ -38,9 +38,6 @@ const userExtractor = async (request, response, next) => {
 };
 
 const errorHandler = (error, request, response, next) => {
-  logger.info("MIDDLEWARE ERROR HANDLER HERE");
-  logger.error(error.message);
-
   if (error.name === "CastError") {
     return response.status(400).send({ error: "Malformatted Id" });
   } else if (error.name === "ValidationError") {
