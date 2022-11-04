@@ -110,6 +110,7 @@ const App = () => {
         <form onSubmit={(event) => handleLogin(event)}>
           <label>username</label>
           <input
+            className="login-username"
             type="text"
             placeholder="Enter username"
             value={username}
@@ -118,13 +119,14 @@ const App = () => {
           <br />
           <label>password</label>
           <input
+            className="login-password"
             type="password"
             placeholder="Enter password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
           />
           <br />
-          <input type="submit" value="login" />
+          <input className="login-submit-btn" type="submit" value="login" />
         </form>
       </>
     )
@@ -132,7 +134,7 @@ const App = () => {
 
   return (
     <div>
-      <h2>blogs</h2>
+      <h2 id="page-header">blogs</h2>
       {errorMessage ? <ErrorMessage message={errorMessage} /> : null}
       {statusMessage ? <AddedMessage blogTitle={statusMessage} /> : null}
       <div>
@@ -143,7 +145,7 @@ const App = () => {
       </div>
       <br />
       <div>
-        <h2>create new</h2>
+        <h2 id="create-new-header">create new</h2>
         <Togglable
           buttonLabel="create new blog"
           hideButtonLabel="cancel"
@@ -152,14 +154,16 @@ const App = () => {
           <BlogForm onCreateHandler={handleCreateBlog} />
         </Togglable>
       </div>
-      {blogs.map((blog) => (
-        <Blog
-          key={blog.id}
-          blog={blog}
-          blogPostRef={blogPostRef}
-          deleteBlogHandler={handleDeleteBlog}
-        />
-      ))}
+      <div className="blog">
+        {blogs.map((blog) => (
+          <Blog
+            key={blog.id}
+            blog={blog}
+            blogPostRef={blogPostRef}
+            deleteBlogHandler={handleDeleteBlog}
+          />
+        ))}
+      </div>
     </div>
   )
 }

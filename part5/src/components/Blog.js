@@ -27,21 +27,31 @@ const Blog = ({ blog, blogPostRef, deleteBlogHandler }) => {
   }
 
   return (
-    <div style={blogStyle}>
+    <div className="blog-ctn" style={blogStyle}>
       <span>
-        {blog.title} {blog.author}
+        <span className="blog-title">{blog.title}</span>
+        <span> </span>
+        <span className="blog-author">{blog.author}</span>
       </span>
-      <span>
+      <span className="toggle-blog">
         <Togglable buttonLabel="view" hideButtonLabel="hide" ref={blogPostRef}>
-          <div>{blog.url}</div>
-          <span>likes {likes}</span>
-          <input type="button" onClick={() => increaseLikes()} value="like" />
-          <div>name of user</div>
-          <input
+          <div className="blog-url">{blog.url}</div>
+          <span className="blog-likes">likes {likes}</span>
+          <button
+            className="like-btn"
+            onClick={() => increaseLikes()}
+            value="like"
+          >
+            like
+          </button>
+          <div>{blog.user?.name}</div>
+          <button
+            className="remove-btn"
             type="button"
             onClick={() => deleteBlogHandler(blog)}
-            value="remove"
-          />
+          >
+            remove
+          </button>
         </Togglable>
       </span>
     </div>

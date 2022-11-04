@@ -18,6 +18,7 @@ const BlogForm = ({ onCreateHandler }) => {
     >
       <label>title:</label>
       <input
+        className="input-title"
         type="text"
         placeholder="title"
         value={title}
@@ -26,6 +27,7 @@ const BlogForm = ({ onCreateHandler }) => {
       <br />
       <label>author:</label>
       <input
+        className="input-author"
         type="text"
         placeholder="author"
         value={author}
@@ -34,13 +36,14 @@ const BlogForm = ({ onCreateHandler }) => {
       <br />
       <label>url:</label>
       <input
+        className="input-url"
         type="text"
         placeholder="url"
         value={url}
         onChange={(event) => setUrl(event.target.value)}
       />
       <br />
-      <input type="submit" value="create" />
+      <input className="btn-submit" type="submit" value="create" />
     </form>
   )
 }
